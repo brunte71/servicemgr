@@ -1,0 +1,178 @@
+import streamlit as st
+import pandas as pd
+from utils.data_handler import DataHandler
+from utils.state_manager import StateManager
+from datetime import datetime, timedelta
+
+st.set_page_config(page_title="Service Planning", layout="wide")
+
+StateManager.init_session_state()
+handler = DataHandler()
+
+st.header("📋 Service Planning")
+
+# Sidebar filters
+st.sidebar.header("Filters")
+object_type_filter = st.sidebar.selectbox(
+    "Object Type",
+    ["All", "Vehicles", "Facilities", "Equipment"]
+)
+
+# Tabs for different views
+tab1, tab2, tab3 = st.tabs(["View Services", "Schedule Service", "Edit Service"])
+
+with tab1:
+    st.subheader("Service Schedule")
+    
+    # Get services
+    if object_type_filter == "All":
+        services_df = handler.get_services()
+    else:
+        services_df = handler.get_services(object_type=object_type_filter)
+    
+    if services_df.empty:
+        st.info("No services scheduled. Add one to get started!")
+    else:
+        # Add a computed column for days until service
+        services_df = services_df.copy()
+        services_df["days_until_service"] = pd.to_datetime(
+            services_df["next_service_date"]
+        ) - pd.Timestamp.now()
+        services_df["days_until_service"] = services_df["days_until_service"].dt.days
+        
+        # Sort by days until service
+        services_df = services_df.sort_values("days_until_service")
+        
+        # Display table
+        display_cols = ["service_id", "object_id", "object_type", "service_name", 
+                       "interval_days", "next_service_date", "days_until_service", "status"]
+        st.dataframe(
+            services_df[display_cols],
+            use_container_width=True,
+            hide_index=True
+        )
+        
+        # Statistics
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            overdue = len(services_df[services_df["days_until_service"] < 0])
+            st.metric("Overdue Services", overdue, delta=None, delta_color="inverse")
+        with col2:
+            due_soon = len(services_df[(services_df["days_until_service"] >= 0) & 
+                                      (services_df["days_until_service"] <= 7)])
+            st.metric("Due in 7 Days", due_soon)
+        with col3:
+            scheduled = len(services_df[services_df["status"] == "Scheduled"])
+            st.metric("Scheduled", scheduled)
+        with col4:
+            completed = len(services_df[services_df["status"] == "Completed"])
+            st.metric("Completed", completed)
+
+with tab2:
+    st.subheader("Schedule New Service")
+    
+    # Get all objects
+    all_objects = handler.get_objects()
+    
+    if all_objects.empty:
+        st.warning("No objects found. Please add objects first (Vehicles, Facilities, Equipment).")
+    else:
+        with st.form("schedule_service_form"):
+            object_type = st.selectbox("Object Type", ["Vehicles", "Facilities", "Equipment"])
+            
+            # Get objects of selected type
+            obj_list = all_objects[all_objects["object_type"] == object_type]
+            
+            if obj_list.empty:
+                st.warning(f"No {object_type.lower()} found. Please add one first.")
+            else:
+                object_id = st.selectbox(
+                    f"Select {object_type}",
+                    obj_list["object_id"].tolist(),
+                    format_func=lambda x: f"{x} - {obj_list[obj_list['object_id']==x]['name'].values[0]}"
+                )
+                
+                service_name = st.text_input("Service Name (e.g., Oil Change, Inspection)")
+                description = st.text_area("Description", max_chars=500)
+                interval_days = st.number_input("Service Interval (days)", min_value=1, value=30)
+                status = st.selectbox("Status", ["Scheduled", "Pending", "In Progress", "Completed"])
+                notes = st.text_area("Notes", max_chars=500)
+                
+                submitted = st.form_submit_button("Schedule Service")
+                if submitted:
+                    if service_name:
+                        service_id = handler.add_service(
+                            object_id=object_id,
+                            object_type=object_type,
+                            service_name=service_name,
+                            interval_days=interval_days,
+                            description=description,
+                            status=status,
+                            notes=notes
+                        )
+                        st.success(f"✓ Service scheduled successfully! ID: {service_id}")
+                        st.rerun()
+                    else:
+                        st.error("Please enter a service name.")
+
+with tab3:
+    st.subheader("Edit Service")
+    
+    # Get all services
+    services_df = handler.get_services()
+    
+    if services_df.empty:
+        st.info("No services to edit.")
+    else:
+        selected_service_id = st.selectbox(
+            "Select service to edit:",
+            services_df["service_id"].tolist(),
+            format_func=lambda x: f"{x} - {services_df[services_df['service_id']==x]['service_name'].values[0]}"
+        )
+        
+        if selected_service_id:
+            service = services_df[services_df["service_id"] == selected_service_id].iloc[0]
+            
+            with st.form("edit_service_form"):
+                service_name = st.text_input("Service Name", value=service["service_name"])
+                description = st.text_area("Description", value=service["description"], max_chars=500)
+                interval_days = st.number_input("Service Interval (days)", value=int(service["interval_days"]))
+                last_service_date = st.date_input(
+                    "Last Service Date",
+                    value=pd.to_datetime(service["last_service_date"]) if pd.notna(service["last_service_date"]) else None
+                )
+                next_service_date = st.date_input(
+                    "Next Service Date",
+                    value=pd.to_datetime(service["next_service_date"])
+                )
+                status = st.selectbox(
+                    "Status",
+                    ["Scheduled", "Pending", "In Progress", "Completed"],
+                    index=["Scheduled", "Pending", "In Progress", "Completed"].index(service["status"])
+                )
+                notes = st.text_area("Notes", value=service["notes"], max_chars=500)
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    submitted = st.form_submit_button("Update Service")
+                with col2:
+                    delete_btn = st.form_submit_button("Delete Service", type="secondary")
+                
+                if submitted:
+                    handler.update_service(
+                        selected_service_id,
+                        service_name=service_name,
+                        description=description,
+                        interval_days=interval_days,
+                        last_service_date=str(last_service_date) if last_service_date else None,
+                        next_service_date=str(next_service_date),
+                        status=status,
+                        notes=notes
+                    )
+                    st.success("✓ Service updated successfully!")
+                    st.rerun()
+                
+                if delete_btn:
+                    handler.delete_service(selected_service_id)
+                    st.success("✓ Service deleted successfully!")
+                    st.rerun()
