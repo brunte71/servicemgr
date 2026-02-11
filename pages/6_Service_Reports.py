@@ -15,7 +15,7 @@ st.header("📊 Service Reports")
 st.sidebar.header("Filters")
 object_type_filter = st.sidebar.selectbox(
     "Object Type",
-    ["All", "Vehicles", "Facilities", "Equipment"],
+    ["All"] + handler.OBJECT_TYPES,
     key="reports_object_type"
 )
 
@@ -105,7 +105,7 @@ with tab2:
         st.warning("No objects found. Please add objects first (Vehicles, Facilities, Equipment).")
     else:
         with st.form("add_report_form"):
-            object_type = st.selectbox("Object Type", ["Vehicles", "Facilities", "Equipment"])
+            object_type = st.selectbox("Object Type", handler.OBJECT_TYPES)
             
             # Get objects of selected type
             obj_list = all_objects[all_objects["object_type"] == object_type]

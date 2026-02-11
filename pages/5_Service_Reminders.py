@@ -15,7 +15,7 @@ st.header("🔔 Service Reminders")
 st.sidebar.header("Filters")
 object_type_filter = st.sidebar.selectbox(
     "Object Type",
-    ["All", "Vehicles", "Facilities", "Equipment"],
+    ["All"] + handler.OBJECT_TYPES,
     key="reminders_object_type"
 )
 

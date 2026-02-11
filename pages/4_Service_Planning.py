@@ -15,7 +15,7 @@ st.header("📋 Service Planning")
 st.sidebar.header("Filters")
 object_type_filter = st.sidebar.selectbox(
     "Object Type",
-    ["All", "Vehicles", "Facilities", "Equipment"]
+    ["All"] + handler.OBJECT_TYPES
 )
 
 # Tabs for different views
@@ -78,7 +78,7 @@ with tab2:
         st.warning("No objects found. Please add objects first (Vehicles, Facilities, Equipment).")
     else:
         with st.form("schedule_service_form"):
-            object_type = st.selectbox("Object Type", ["Vehicles", "Facilities", "Equipment"])
+            object_type = st.selectbox("Object Type", handler.OBJECT_TYPES)
             
             # Get objects of selected type
             obj_list = all_objects[all_objects["object_type"] == object_type]
