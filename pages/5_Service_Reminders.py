@@ -126,8 +126,11 @@ with tab2:
 with tab3:
     st.subheader("Edit Reminder")
     
-    # Get all reminders
-    reminders_df = handler.get_reminders()
+    # Get reminders filtered by object type
+    if object_type_filter == "All":
+        reminders_df = handler.get_reminders()
+    else:
+        reminders_df = handler.get_reminders(object_type=object_type_filter)
     
     if reminders_df.empty:
         st.info("No reminders to edit.")

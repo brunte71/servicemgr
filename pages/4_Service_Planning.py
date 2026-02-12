@@ -118,8 +118,11 @@ with tab2:
 with tab3:
     st.subheader("Edit Service")
     
-    # Get all services
-    services_df = handler.get_services()
+    # Get services filtered by object type
+    if object_type_filter == "All":
+        services_df = handler.get_services()
+    else:
+        services_df = handler.get_services(object_type=object_type_filter)
     
     if services_df.empty:
         st.info("No services to edit.")

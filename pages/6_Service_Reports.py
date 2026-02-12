@@ -148,8 +148,11 @@ with tab2:
 with tab3:
     st.subheader("Edit Report")
     
-    # Get all reports
-    reports_df = handler.get_reports()
+    # Get reports filtered by object type
+    if object_type_filter == "All":
+        reports_df = handler.get_reports()
+    else:
+        reports_df = handler.get_reports(object_type=object_type_filter)
     
     if reports_df.empty:
         st.info("No reports to edit.")
