@@ -21,8 +21,9 @@ class DataHandler:
         self._initialize_files()
         try:
             from filelock import FileLock
+            self._FileLock = FileLock
         except Exception:
-            FileLock = None
+            self._FileLock = None
     
     def _initialize_files(self):
         """Initialize CSV files if they don't exist."""
@@ -236,8 +237,8 @@ class DataHandler:
             self._write_df_atomic(self.reports_file, df)
 
     def _get_lock(self, target_path: Path):
-        if FileLock:
-            return FileLock(str(target_path) + ".lock")
+        if self._FileLock:
+            return self._FileLock(str(target_path) + ".lock")
         # Fallback dummy lock
         class _DummyLock:
             def __enter__(self):
