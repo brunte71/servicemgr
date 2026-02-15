@@ -85,6 +85,7 @@ with tab2:
             
             if obj_list.empty:
                 st.warning(f"No {object_type.lower()} found. Please add one first.")
+                submitted = st.form_submit_button("Schedule Service", disabled=True)
             else:
                 object_id = st.selectbox(
                     f"Select {object_type}",
@@ -99,21 +100,22 @@ with tab2:
                 notes = st.text_area("Notes", max_chars=500)
                 
                 submitted = st.form_submit_button("Schedule Service")
-                if submitted:
-                    if service_name:
-                        service_id = handler.add_service(
-                            object_id=object_id,
-                            object_type=object_type,
-                            service_name=service_name,
-                            interval_days=interval_days,
-                            description=description,
-                            status=status,
-                            notes=notes
-                        )
-                        st.success(f"✓ Service scheduled successfully! ID: {service_id}")
-                        st.rerun()
-                    else:
-                        st.error("Please enter a service name.")
+            
+            if submitted and not obj_list.empty:
+                if service_name:
+                    service_id = handler.add_service(
+                        object_id=object_id,
+                        object_type=object_type,
+                        service_name=service_name,
+                        interval_days=interval_days,
+                        description=description,
+                        status=status,
+                        notes=notes
+                    )
+                    st.success(f"✓ Service scheduled successfully! ID: {service_id}")
+                    st.rerun()
+                else:
+                    st.error("Please enter a service name.")
 
 with tab3:
     st.subheader("Edit Service")

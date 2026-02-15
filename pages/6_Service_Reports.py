@@ -112,6 +112,7 @@ with tab2:
             
             if obj_list.empty:
                 st.warning(f"No {object_type.lower()} found. Please add one first.")
+                submitted = st.form_submit_button("Add Report", disabled=True)
             else:
                 object_id = st.selectbox(
                     f"Select {object_type}",
@@ -129,21 +130,22 @@ with tab2:
                 notes = st.text_area("Notes", max_chars=500)
                 
                 submitted = st.form_submit_button("Add Report")
-                if submitted:
-                    if title:
-                        report_id = handler.add_report(
-                            object_id=object_id,
-                            object_type=object_type,
-                            report_type=report_type,
-                            title=title,
-                            description=description,
-                            completion_date=str(completion_date),
-                            notes=notes
-                        )
-                        st.success(f"✓ Report added successfully! ID: {report_id}")
-                        st.rerun()
-                    else:
-                        st.error("Please enter a report title.")
+            
+            if submitted and not obj_list.empty:
+                if title:
+                    report_id = handler.add_report(
+                        object_id=object_id,
+                        object_type=object_type,
+                        report_type=report_type,
+                        title=title,
+                        description=description,
+                        completion_date=str(completion_date),
+                        notes=notes
+                    )
+                    st.success(f"✓ Report added successfully! ID: {report_id}")
+                    st.rerun()
+                else:
+                    st.error("Please enter a report title.")
 
 with tab3:
     st.subheader("Edit Report")
