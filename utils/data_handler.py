@@ -10,8 +10,45 @@ DATA_DIR.mkdir(exist_ok=True)
 
 class DataHandler:
     """Handle CSV data storage and retrieval for service management."""
-    
     OBJECT_TYPES = ["Vehicle", "Facility", "Other"]
+    # ...existing code...
+
+    def _initialize_files(self):
+        # ...existing code...
+        # Fault Reports CSV
+        self.fault_reports_file = DATA_DIR / "fault_reports.csv"
+        if not self.fault_reports_file.exists():
+            fault_reports_df = pd.DataFrame(columns=[
+                "fault_id", "object_id", "object_type", "observation_date", "actual_meter_reading", "meter_unit", "description", "photo_paths", "created_date"
+            ])
+            self._write_df_atomic(self.fault_reports_file, fault_reports_df)
+
+    def get_fault_reports(self, object_type=None, object_id=None):
+        df = self._read_df_locked(self.fault_reports_file)
+        if object_type:
+            df = df[df["object_type"] == object_type]
+        if object_id:
+            df = df[df["object_id"] == object_id]
+        return df
+
+    def add_fault_report(self, object_id, object_type, observation_date, actual_meter_reading, meter_unit, description, photo_paths=None):
+        df = self._read_df_locked(self.fault_reports_file)
+        fault_id = f"FLT-{len(df) + 1:05d}"
+        new_row = pd.DataFrame([{
+            "fault_id": fault_id,
+            "object_id": object_id,
+            "object_type": object_type,
+            "observation_date": observation_date,
+            "actual_meter_reading": actual_meter_reading,
+            "meter_unit": meter_unit,
+            "description": description,
+            "photo_paths": ";".join(photo_paths) if photo_paths else "",
+            "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }])
+        df = pd.concat([df, new_row], ignore_index=True)
+        self._write_df_atomic(self.fault_reports_file, df)
+        return fault_id
+    # ...existing code...
     # Mapping of common variants to canonical object_type values
     _OBJECT_TYPE_CANON = {
         "vehicle": "Vehicle",
@@ -29,6 +66,7 @@ class DataHandler:
         self.services_file = DATA_DIR / "services.csv"
         self.reminders_file = DATA_DIR / "reminders.csv"
         self.reports_file = DATA_DIR / "reports.csv"
+        self.fault_reports_file = DATA_DIR / "fault_reports.csv"
         self._initialize_files()
         try:
             from filelock import FileLock
@@ -94,7 +132,25 @@ class DataHandler:
         # normalize object_type before creating
         object_type = self.normalize_object_type(object_type)
         df = self._read_df_locked(self.objects_file)
-        object_id = f"{str(object_type)[:3].upper()}-{len(df) + 1:04d}"
+        # Prefix based on first three characters of canonical object_type
+        prefix = str(object_type)[:3].upper()
+        # Find existing highest index for this object_type
+        existing = df[df["object_type"] == object_type]
+        next_index = 1
+        if not existing.empty and "object_id" in existing.columns:
+            # extract numeric suffix after last '-' and compute max
+            import re
+            nums = []
+            for oid in existing["object_id"].dropna().astype(str).tolist():
+                m = re.search(r"-(\d+)$", oid)
+                if m:
+                    try:
+                        nums.append(int(m.group(1)))
+                    except Exception:
+                        pass
+            if nums:
+                next_index = max(nums) + 1
+        object_id = f"{prefix}-{next_index:04d}"
         new_row = pd.DataFrame([{
             "object_id": object_id,
             "object_type": object_type,

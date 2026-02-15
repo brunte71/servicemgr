@@ -104,22 +104,33 @@ with tab2:
     if all_objects.empty:
         st.warning("No equipment found. Please add equipment first.")
     else:
+        # --- Robust, reactive object type/equipment selection ---
+        if "report_object_type" not in st.session_state:
+            st.session_state["report_object_type"] = object_type_filter if object_type_filter in handler.OBJECT_TYPES else handler.OBJECT_TYPES[0]
+        def set_report_object_type():
+            st.session_state["report_object_type"] = st.session_state["report_object_type_select"]
+
+        # Place Object Type selectbox OUTSIDE the form for reactivity
+        object_type_tab = st.selectbox(
+            "Object Type",
+            handler.OBJECT_TYPES,
+            index=handler.OBJECT_TYPES.index(st.session_state["report_object_type"]),
+            key="report_object_type_select",
+            on_change=set_report_object_type
+        )
+        filter_type = st.session_state["report_object_type"]
+        obj_list = all_objects[all_objects["object_type"] == filter_type]
         with st.form("add_report_form"):
-            object_type = st.selectbox("Object Type", handler.OBJECT_TYPES)
-            
-            # Get objects of selected type
-            obj_list = all_objects[all_objects["object_type"] == object_type]
-            
             if obj_list.empty:
-                st.warning(f"No {object_type.lower()} found. Please add one first.")
+                st.warning(f"No {filter_type.lower()} found. Please add one first.")
                 submitted = st.form_submit_button("Add Report", disabled=True)
             else:
                 object_id = st.selectbox(
                     "Select Equipment",
                     obj_list["object_id"].tolist(),
-                    format_func=lambda x: f"{x} - {obj_list[obj_list['object_id']==x]['name'].values[0]}"
+                    format_func=lambda x: f"{x} - {obj_list[obj_list['object_id']==x]['name'].values[0]}",
+                    key="report_equipment_select"
                 )
-                
                 report_type = st.selectbox(
                     "Report Type",
                     ["Maintenance", "Inspection", "Repair", "Preventive", "Other"]
@@ -130,21 +141,20 @@ with tab2:
                 description = st.text_area("Description", max_chars=1000)
                 completion_date = st.date_input("Completion Date")
                 notes = st.text_area("Notes", max_chars=500)
-                
                 submitted = st.form_submit_button("Add Report")
             
             if submitted and not obj_list.empty:
                 if title:
                     report_id = handler.add_report(
                         object_id=object_id,
-                        object_type=object_type,
+                        object_type=st.session_state["report_object_type"],
                         report_type=report_type,
-                            title=title,
-                            description=description,
-                            completion_date=str(completion_date),
-                            notes=notes,
-                            actual_meter_reading=int(actual_meter_reading) if actual_meter_reading is not None else None,
-                            meter_unit=meter_unit
+                        title=title,
+                        description=description,
+                        completion_date=str(completion_date),
+                        notes=notes,
+                        actual_meter_reading=int(actual_meter_reading) if actual_meter_reading is not None else None,
+                        meter_unit=meter_unit
                     )
                     st.success(f"✓ Report added successfully! ID: {report_id}")
                     st.rerun()

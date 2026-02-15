@@ -65,10 +65,8 @@ with tab1:
         
         if selected_id:
             StateManager.set_object_id(selected_id)
-            StateManager.set_object_type("Vehicle")
-            
             vehicle = vehicles_df[vehicles_df["object_id"] == selected_id].iloc[0]
-            
+            StateManager.set_object_type(vehicle['object_type'])
             st.write("---")
             st.subheader(f"Details: {vehicle['name']}")
             
@@ -113,6 +111,7 @@ with tab2:
     st.subheader("Add New Equipment")
     
     with st.form("add_equipment_form"):
+        object_type = st.selectbox("Object Type", handler.OBJECT_TYPES)
         name = st.text_input("Equipment Name (e.g., Truck-001)")
         description = st.text_area("Description", max_chars=500)
         status = st.selectbox("Status", ["Active", "Inactive", "Maintenance"])
@@ -121,7 +120,7 @@ with tab2:
         if submitted:
             if name:
                 vehicle_id = handler.add_object(
-                    object_type="Vehicle",
+                    object_type=object_type,
                     name=name,
                     description=description,
                     status=status
@@ -142,32 +141,29 @@ with tab3:
             vehicles_df["object_id"].tolist(),
             key="edit_equipment_select"
         )
-        
         if selected_vehicle_id:
             vehicle = vehicles_df[vehicles_df["object_id"] == selected_vehicle_id].iloc[0]
-            
             with st.form("edit_equipment_form"):
+                object_type_val = st.selectbox("Object Type", handler.OBJECT_TYPES, index=handler.OBJECT_TYPES.index(vehicle["object_type"]) if vehicle["object_type"] in handler.OBJECT_TYPES else 0)
                 name = st.text_input("Equipment Name", value=vehicle["name"])
                 description = st.text_area("Description", value=vehicle["description"], max_chars=500)
                 status = st.selectbox("Status", ["Active", "Inactive", "Maintenance"], 
                                      index=["Active", "Inactive", "Maintenance"].index(vehicle["status"]))
-                
                 col1, col2 = st.columns(2)
                 with col1:
                     submitted = st.form_submit_button("Update Equipment")
                 with col2:
                     delete_btn = st.form_submit_button("Delete Equipment", type="secondary")
-                
                 if submitted:
                     handler.update_object(
                         selected_vehicle_id,
+                        object_type=object_type_val,
                         name=name,
                         description=description,
                         status=status
                     )
                     st.success("✓ Equipment updated successfully!")
                     st.rerun()
-                
                 if delete_btn:
                     handler.delete_object(selected_vehicle_id)
                     st.success("✓ Equipment deleted successfully!")

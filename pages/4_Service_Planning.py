@@ -104,22 +104,33 @@ with tab2:
     if all_objects.empty:
         st.warning("No equipment found. Please add equipment first.")
     else:
+        # --- Robust, reactive object type/equipment selection ---
+        if "service_object_type" not in st.session_state:
+            st.session_state["service_object_type"] = object_type_filter if object_type_filter in handler.OBJECT_TYPES else handler.OBJECT_TYPES[0]
+        def set_service_object_type():
+            st.session_state["service_object_type"] = st.session_state["service_object_type_select"]
+
+        # Place Object Type selectbox OUTSIDE the form for reactivity
+        object_type_tab = st.selectbox(
+            "Object Type",
+            handler.OBJECT_TYPES,
+            index=handler.OBJECT_TYPES.index(st.session_state["service_object_type"]),
+            key="service_object_type_select",
+            on_change=set_service_object_type
+        )
+        filter_type = st.session_state["service_object_type"]
+        obj_list = all_objects[all_objects["object_type"] == filter_type]
         with st.form("schedule_service_form"):
-            object_type = st.selectbox("Object Type", handler.OBJECT_TYPES)
-            
-            # Get objects of selected type
-            obj_list = all_objects[all_objects["object_type"] == object_type]
-            
             if obj_list.empty:
-                st.warning(f"No {object_type.lower()} found. Please add one first.")
+                st.warning(f"No {filter_type.lower()} found. Please add one first.")
                 submitted = st.form_submit_button("Schedule Service", disabled=True)
             else:
                 object_id = st.selectbox(
                     "Select Equipment",
                     obj_list["object_id"].tolist(),
-                    format_func=lambda x: f"{x} - {obj_list[obj_list['object_id']==x]['name'].values[0]}"
+                    format_func=lambda x: f"{x} - {obj_list[obj_list['object_id']==x]['name'].values[0]}",
+                    key="service_equipment_select"
                 )
-                
                 service_name = st.text_input("Service Name (e.g., Oil Change, Inspection)")
                 description = st.text_area("Description", max_chars=500)
                 interval_days = st.number_input("Service Interval (days)", min_value=1, value=30)
@@ -127,18 +138,17 @@ with tab2:
                 meter_unit = st.selectbox("Meter Unit", handler.get_meter_units())
                 status = st.selectbox("Status", ["Scheduled", "Pending", "In Progress", "Completed"])
                 notes = st.text_area("Notes", max_chars=500)
-                
                 submitted = st.form_submit_button("Schedule Service")
             
             if submitted and not obj_list.empty:
                 if service_name:
                     service_id = handler.add_service(
                         object_id=object_id,
-                        object_type=object_type,
+                        object_type=st.session_state["service_object_type"],
                         service_name=service_name,
-                            interval_days=interval_days,
-                            expected_meter_reading=int(expected_meter_reading) if expected_meter_reading is not None else None,
-                            meter_unit=meter_unit,
+                        interval_days=interval_days,
+                        expected_meter_reading=int(expected_meter_reading) if expected_meter_reading is not None else None,
+                        meter_unit=meter_unit,
                         description=description,
                         status=status,
                         notes=notes
