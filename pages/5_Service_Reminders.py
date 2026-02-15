@@ -53,10 +53,18 @@ with tab1:
         
         # Sort by days until reminder
         reminders_df = reminders_df.sort_values("days_until")
+        # Enrich with service meter info (expected reading and unit)
+        services_df = handler.get_services()
+        if not services_df.empty:
+            reminders_df = reminders_df.merge(
+                services_df[["service_id", "expected_meter_reading", "meter_unit"]],
+                on="service_id",
+                how="left"
+            )
         
         # Display table
         display_cols = ["reminder_id", "service_id", "object_id", "object_type", 
-                       "reminder_date", "days_until", "status", "notes"]
+                       "reminder_date", "days_until", "status", "expected_meter_reading", "meter_unit", "notes"]
         st.dataframe(
             reminders_df[display_cols],
             use_container_width=True,
@@ -109,6 +117,8 @@ with tab2:
                     st.write(f"**Interval:** {selected_service['interval_days']} days")
                 
                 reminder_date = st.date_input("Reminder Date")
+                st.write(f"**Expected Meter Reading:** {selected_service.get('expected_meter_reading', '')}")
+                st.write(f"**Meter Unit:** {selected_service.get('meter_unit', '')}")
                 notes = st.text_area("Notes", max_chars=500)
                 
                 submitted = st.form_submit_button("Add Reminder")
@@ -150,6 +160,9 @@ with tab3:
                     st.write(f"**Object ID:** {reminder['object_id']}")
                 with col2:
                     st.write(f"**Object Type:** {reminder['object_type']}")
+                # Show associated expected meter info when available
+                st.write(f"**Expected Meter Reading:** {reminder.get('expected_meter_reading', '')}")
+                st.write(f"**Meter Unit:** {reminder.get('meter_unit', '')}")
                 
                 reminder_date = st.date_input(
                     "Reminder Date",

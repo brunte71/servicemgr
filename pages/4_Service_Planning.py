@@ -18,6 +18,32 @@ object_type_filter = st.sidebar.selectbox(
     ["All"] + handler.OBJECT_TYPES
 )
 
+# Meter unit management
+with st.sidebar.expander("Manage Meter Units"):
+    mu_list = handler.get_meter_units()
+    st.write("Current units:")
+    for u in mu_list:
+        col1, col2 = st.columns([3,1])
+        with col1:
+            st.write(u)
+        with col2:
+            if st.button(f"Delete {u}", key=f"del_mu_{u}"):
+                deleted = handler.delete_meter_unit(u)
+                if deleted:
+                    st.success(f"Deleted unit {u}")
+                    st.experimental_rerun()
+                else:
+                    st.error("Could not delete unit")
+
+    new_unit = st.text_input("Add Unit", key="add_mu_input")
+    if st.button("Add Unit"):
+        added = handler.add_meter_unit(new_unit)
+        if added:
+            st.success(f"Added unit {new_unit}")
+            st.experimental_rerun()
+        else:
+            st.error("Could not add unit (may already exist or be empty)")
+
 # Tabs for different views
 tab1, tab2, tab3 = st.tabs(["View Services", "Schedule Service", "Edit Service"])
 
@@ -45,7 +71,8 @@ with tab1:
         
         # Display table
         display_cols = ["service_id", "object_id", "object_type", "service_name", 
-                       "interval_days", "next_service_date", "days_until_service", "status"]
+                       "interval_days", "next_service_date", "days_until_service", "status",
+                       "expected_meter_reading", "meter_unit"]
         st.dataframe(
             services_df[display_cols],
             use_container_width=True,
@@ -96,6 +123,8 @@ with tab2:
                 service_name = st.text_input("Service Name (e.g., Oil Change, Inspection)")
                 description = st.text_area("Description", max_chars=500)
                 interval_days = st.number_input("Service Interval (days)", min_value=1, value=30)
+                expected_meter_reading = st.number_input("Expected Meter Reading", min_value=0, value=0)
+                meter_unit = st.selectbox("Meter Unit", handler.get_meter_units())
                 status = st.selectbox("Status", ["Scheduled", "Pending", "In Progress", "Completed"])
                 notes = st.text_area("Notes", max_chars=500)
                 
@@ -107,7 +136,9 @@ with tab2:
                         object_id=object_id,
                         object_type=object_type,
                         service_name=service_name,
-                        interval_days=interval_days,
+                            interval_days=interval_days,
+                            expected_meter_reading=int(expected_meter_reading) if expected_meter_reading is not None else None,
+                            meter_unit=meter_unit,
                         description=description,
                         status=status,
                         notes=notes
@@ -142,6 +173,8 @@ with tab3:
                 service_name = st.text_input("Service Name", value=service["service_name"])
                 description = st.text_area("Description", value=service["description"], max_chars=500)
                 interval_days = st.number_input("Service Interval (days)", value=int(service["interval_days"]))
+                expected_meter_reading = st.number_input("Expected Meter Reading", min_value=0, value=int(service.get("expected_meter_reading") if pd.notna(service.get("expected_meter_reading")) and service.get("expected_meter_reading") is not None else 0))
+                meter_unit = st.selectbox("Meter Unit", handler.get_meter_units(), index=handler.get_meter_units().index(service.get("meter_unit")) if service.get("meter_unit") in handler.get_meter_units() else 0)
                 last_service_date = st.date_input(
                     "Last Service Date",
                     value=pd.to_datetime(service["last_service_date"]) if pd.notna(service["last_service_date"]) else None
@@ -169,6 +202,8 @@ with tab3:
                         service_name=service_name,
                         description=description,
                         interval_days=interval_days,
+                        expected_meter_reading=int(expected_meter_reading) if expected_meter_reading is not None else None,
+                        meter_unit=meter_unit,
                         last_service_date=str(last_service_date) if last_service_date else None,
                         next_service_date=str(next_service_date),
                         status=status,

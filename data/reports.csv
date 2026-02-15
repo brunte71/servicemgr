@@ -1,1 +1,1 @@
-report_id,object_id,object_type,report_type,title,description,completion_date,notes,created_date
+report_id,object_id,object_type,report_type,title,description,completion_date,notes,created_date,actual_meter_reading,meter_unit

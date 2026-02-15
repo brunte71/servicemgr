@@ -1,2 +1,2 @@
-service_id,object_id,object_type,service_name,description,interval_days,last_service_date,next_service_date,status,notes,created_date
-SVC-00001,VEH-0001,Vehicles,DOH419 - Förkontroll bes,,365,,2026-02-14,Scheduled,,2026-02-14 09:51:29
+service_id,object_id,object_type,service_name,description,interval_days,last_service_date,next_service_date,status,notes,created_date,expected_meter_reading,meter_unit
+SVC-00001,VEH-0001,Vehicle,DOH419 - Förkontroll bes,nan,365,,2026-04-11,Scheduled,nan,2026-02-14 09:51:29,112000.0,km

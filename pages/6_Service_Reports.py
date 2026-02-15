@@ -46,7 +46,7 @@ with tab1:
     else:
         # Display table
         display_cols = ["report_id", "object_id", "object_type", "report_type", 
-                       "title", "completion_date", "notes"]
+                       "title", "completion_date", "notes", "actual_meter_reading", "meter_unit"]
         st.dataframe(
             reports_df[display_cols],
             use_container_width=True,
@@ -124,6 +124,8 @@ with tab2:
                     "Report Type",
                     ["Maintenance", "Inspection", "Repair", "Preventive", "Other"]
                 )
+                actual_meter_reading = st.number_input("Actual Meter Reading", min_value=0, value=0)
+                meter_unit = st.selectbox("Meter Unit", handler.get_meter_units())
                 title = st.text_input("Report Title")
                 description = st.text_area("Description", max_chars=1000)
                 completion_date = st.date_input("Completion Date")
@@ -137,10 +139,12 @@ with tab2:
                         object_id=object_id,
                         object_type=object_type,
                         report_type=report_type,
-                        title=title,
-                        description=description,
-                        completion_date=str(completion_date),
-                        notes=notes
+                            title=title,
+                            description=description,
+                            completion_date=str(completion_date),
+                            notes=notes,
+                            actual_meter_reading=int(actual_meter_reading) if actual_meter_reading is not None else None,
+                            meter_unit=meter_unit
                     )
                     st.success(f"✓ Report added successfully! ID: {report_id}")
                     st.rerun()
@@ -183,6 +187,8 @@ with tab3:
                 )
                 title = st.text_input("Report Title", value=report["title"])
                 description = st.text_area("Description", value=report["description"], max_chars=1000)
+                actual_meter_reading = st.number_input("Actual Meter Reading", min_value=0, value=int(report.get("actual_meter_reading") if pd.notna(report.get("actual_meter_reading")) and report.get("actual_meter_reading") is not None else 0))
+                meter_unit = st.selectbox("Meter Unit", handler.get_meter_units(), index=handler.get_meter_units().index(report.get("meter_unit")) if report.get("meter_unit") in handler.get_meter_units() else 0)
                 completion_date = st.date_input(
                     "Completion Date",
                     value=pd.to_datetime(report["completion_date"])
@@ -202,7 +208,9 @@ with tab3:
                         title=title,
                         description=description,
                         completion_date=str(completion_date),
-                        notes=notes
+                        notes=notes,
+                        actual_meter_reading=int(actual_meter_reading) if actual_meter_reading is not None else None,
+                        meter_unit=meter_unit
                     )
                     st.success("✓ Report updated successfully!")
                     st.rerun()

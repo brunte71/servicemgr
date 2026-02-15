@@ -51,7 +51,9 @@ class DataHandler:
             services_df = pd.DataFrame(columns=[
                 "service_id", "object_id", "object_type", "service_name", 
                 "description", "interval_days", "last_service_date", 
-                "next_service_date", "status", "notes", "created_date"
+                "next_service_date", "status", "notes", "created_date",
+                # Metering fields
+                "expected_meter_reading", "meter_unit"
             ])
             self._write_df_atomic(self.services_file, services_df)
         
@@ -67,9 +69,17 @@ class DataHandler:
         if not self.reports_file.exists():
             reports_df = pd.DataFrame(columns=[
                 "report_id", "object_id", "object_type", "report_type",
-                "title", "description", "completion_date", "notes", "created_date"
+                "title", "description", "completion_date", "notes", "created_date",
+                # Metering fields for reports (actual readings)
+                "actual_meter_reading", "meter_unit"
             ])
             self._write_df_atomic(self.reports_file, reports_df)
+
+        # Meter units list file
+        self.meter_units_file = DATA_DIR / "meter_units.csv"
+        if not self.meter_units_file.exists():
+            mu_df = pd.DataFrame({"unit": ["km", "kWh"]})
+            self._write_df_atomic(self.meter_units_file, mu_df)
     
     # ===== OBJECTS MANAGEMENT =====
     def get_objects(self, object_type=None):
@@ -130,7 +140,8 @@ class DataHandler:
         return df
     
     def add_service(self, object_id, object_type, service_name, interval_days, 
-                   description="", status="Scheduled", notes=""):
+                   description="", status="Scheduled", notes="",
+                   expected_meter_reading=None, meter_unit=None):
         """Add a new service."""
         # normalize object_type
         object_type = self.normalize_object_type(object_type)
@@ -147,7 +158,9 @@ class DataHandler:
             "next_service_date": datetime.now().strftime("%Y-%m-%d"),
             "status": status,
             "notes": notes,
-            "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "expected_meter_reading": expected_meter_reading,
+            "meter_unit": meter_unit
         }])
         df = pd.concat([df, new_row], ignore_index=True)
         self._write_df_atomic(self.services_file, df)
@@ -166,6 +179,41 @@ class DataHandler:
             self._write_df_atomic(self.services_file, df)
             return True
         return False
+
+    # ===== METER UNIT MANAGEMENT =====
+    def get_meter_units(self):
+        """Return list of configured meter units."""
+        if not hasattr(self, 'meter_units_file'):
+            self.meter_units_file = DATA_DIR / "meter_units.csv"
+        if not self.meter_units_file.exists():
+            return ["km", "kWh"]
+        df = pd.read_csv(self.meter_units_file)
+        if 'unit' in df.columns:
+            return df['unit'].dropna().astype(str).tolist()
+        return []
+
+    def add_meter_unit(self, unit):
+        """Add a new meter unit if not present."""
+        unit = str(unit).strip()
+        if not unit:
+            return False
+        units = self.get_meter_units()
+        if unit in units:
+            return False
+        units.append(unit)
+        df = pd.DataFrame({"unit": units})
+        self._write_df_atomic(self.meter_units_file, df)
+        return True
+
+    def delete_meter_unit(self, unit):
+        """Delete a meter unit if it exists."""
+        units = self.get_meter_units()
+        if unit not in units:
+            return False
+        units = [u for u in units if u != unit]
+        df = pd.DataFrame({"unit": units})
+        self._write_df_atomic(self.meter_units_file, df)
+        return True
     
     def delete_service(self, service_id):
         """Delete a service."""
@@ -239,7 +287,8 @@ class DataHandler:
         return df
     
     def add_report(self, object_id, object_type, report_type, title, 
-                  description="", completion_date=None, notes=""):
+                  description="", completion_date=None, notes="",
+                  actual_meter_reading=None, meter_unit=None):
         """Add a new report."""
         # normalize object_type
         object_type = self.normalize_object_type(object_type)
@@ -254,7 +303,9 @@ class DataHandler:
             "description": description,
             "completion_date": completion_date or datetime.now().strftime("%Y-%m-%d"),
             "notes": notes,
-            "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "actual_meter_reading": actual_meter_reading,
+            "meter_unit": meter_unit
         }])
         df = pd.concat([df, new_row], ignore_index=True)
         self._write_df_atomic(self.reports_file, df)
