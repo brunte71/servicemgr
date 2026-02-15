@@ -36,8 +36,23 @@ st.markdown("""
 
 # --- Fault Reports Highlight ---
 st.markdown("""
-<div style='background-color:#f9f6e7;padding:1em;border-radius:8px;margin-bottom:1em;'>
-<b>New:</b> <span style='color:#d35400;'>Fault Reports</span> page now supports multiple photos per report, instant updates, and improved photo viewing!<br>
+<style>
+.news-info {
+    background-color: var(--news-bg, #f9f6e7);
+    color: var(--news-fg, #222);
+    padding: 1em;
+    border-radius: 8px;
+    margin-bottom: 1em;
+}
+@media (prefers-color-scheme: dark) {
+    .news-info {
+        --news-bg: #2a2a2a;
+        --news-fg: #ffd580;
+    }
+}
+</style>
+<div class="news-info">
+<b>New:</b> <span style="color:#d35400;">Fault Reports</span> page now supports multiple photos per report, instant updates, and improved photo viewing!<br>
 Easily document faults with images and view all reports in real time.
 </div>
 """, unsafe_allow_html=True)
