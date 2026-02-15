@@ -115,7 +115,7 @@ with tab2:
                 submitted = st.form_submit_button("Add Report", disabled=True)
             else:
                 object_id = st.selectbox(
-                    f"Select {object_type}",
+                    "Select Equipment",
                     obj_list["object_id"].tolist(),
                     format_func=lambda x: f"{x} - {obj_list[obj_list['object_id']==x]['name'].values[0]}"
                 )
