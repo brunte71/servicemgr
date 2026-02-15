@@ -75,7 +75,7 @@ with tab2:
     all_objects = handler.get_objects()
     
     if all_objects.empty:
-        st.warning("No vehicles found. Please add vehicles first.")
+        st.warning("No equipment found. Please add equipment first.")
     else:
         with st.form("schedule_service_form"):
             object_type = st.selectbox("Object Type", handler.OBJECT_TYPES)

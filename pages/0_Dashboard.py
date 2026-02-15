@@ -41,12 +41,12 @@ st.subheader("Objects Overview")
 
 col1 = st.columns(1)[0]
 
-vehicles = len(objects_df[objects_df["object_type"] == "Vehicles"])
+equipment = len(objects_df[objects_df["object_type"] == "Vehicle"])
 
 with col1:
-    st.metric("🚗 Vehicles", vehicles)
-    if st.button("View Vehicles", key="dash_vehicles"):
-        st.switch_page("pages/1_Vehicles.py")
+    st.metric("🛠️ Equipment", equipment)
+    if st.button("View Equipment", key="dash_equipment"):
+        st.switch_page("pages/1_Equipment.py")
 
 # Recent services
 st.write("---")
@@ -118,8 +118,8 @@ st.subheader("Quick Actions")
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    if st.button("➕ Add Vehicle", use_container_width=True):
-        st.switch_page("pages/1_Vehicles.py")
+    if st.button("➕ Add Equipment", use_container_width=True):
+        st.switch_page("pages/1_Equipment.py")
 
 with col2:
     if st.button("📋 Plan Service", use_container_width=True):

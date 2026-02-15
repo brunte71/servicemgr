@@ -11,7 +11,18 @@ DATA_DIR.mkdir(exist_ok=True)
 class DataHandler:
     """Handle CSV data storage and retrieval for service management."""
     
-    OBJECT_TYPES = ["Vehicles"]
+    OBJECT_TYPES = ["Vehicle", "Facility", "Other"]
+    # Mapping of common variants to canonical object_type values
+    _OBJECT_TYPE_CANON = {
+        "vehicle": "Vehicle",
+        "vehicles": "Vehicle",
+        "veh": "Vehicle",
+        "facility": "Facility",
+        "facilities": "Facility",
+        "fac": "Facility",
+        "other": "Other",
+        "equipment": "Other",
+    }
     
     def __init__(self):
         self.objects_file = DATA_DIR / "objects.csv"
@@ -70,8 +81,10 @@ class DataHandler:
     
     def add_object(self, object_type, name, description="", status="Active"):
         """Add a new object."""
+        # normalize object_type before creating
+        object_type = self.normalize_object_type(object_type)
         df = self._read_df_locked(self.objects_file)
-        object_id = f"{object_type[:3].upper()}-{len(df) + 1:04d}"
+        object_id = f"{str(object_type)[:3].upper()}-{len(df) + 1:04d}"
         new_row = pd.DataFrame([{
             "object_id": object_id,
             "object_type": object_type,
@@ -92,6 +105,8 @@ class DataHandler:
         if mask.any():
             for key, value in kwargs.items():
                 if key in df.columns:
+                    if key == "object_type":
+                        value = self.normalize_object_type(value)
                     df.loc[mask, key] = value
             df.loc[mask, "last_updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             self._write_df_atomic(self.objects_file, df)
@@ -117,6 +132,8 @@ class DataHandler:
     def add_service(self, object_id, object_type, service_name, interval_days, 
                    description="", status="Scheduled", notes=""):
         """Add a new service."""
+        # normalize object_type
+        object_type = self.normalize_object_type(object_type)
         df = self._read_df_locked(self.services_file)
         service_id = f"SVC-{len(df) + 1:05d}"
         new_row = pd.DataFrame([{
@@ -143,6 +160,8 @@ class DataHandler:
         if mask.any():
             for key, value in kwargs.items():
                 if key in df.columns:
+                    if key == "object_type":
+                        value = self.normalize_object_type(value)
                     df.loc[mask, key] = value
             self._write_df_atomic(self.services_file, df)
             return True
@@ -168,6 +187,8 @@ class DataHandler:
     
     def add_reminder(self, service_id, object_id, object_type, reminder_date, notes=""):
         """Add a new reminder."""
+        # normalize object_type
+        object_type = self.normalize_object_type(object_type)
         df = self._read_df_locked(self.reminders_file)
         reminder_id = f"REM-{len(df) + 1:05d}"
         new_row = pd.DataFrame([{
@@ -191,6 +212,8 @@ class DataHandler:
         if mask.any():
             for key, value in kwargs.items():
                 if key in df.columns:
+                    if key == "object_type":
+                        value = self.normalize_object_type(value)
                     df.loc[mask, key] = value
             self._write_df_atomic(self.reminders_file, df)
             return True
@@ -218,6 +241,8 @@ class DataHandler:
     def add_report(self, object_id, object_type, report_type, title, 
                   description="", completion_date=None, notes=""):
         """Add a new report."""
+        # normalize object_type
+        object_type = self.normalize_object_type(object_type)
         df = self._read_df_locked(self.reports_file)
         report_id = f"REP-{len(df) + 1:05d}"
         new_row = pd.DataFrame([{
@@ -242,6 +267,8 @@ class DataHandler:
         if mask.any():
             for key, value in kwargs.items():
                 if key in df.columns:
+                    if key == "object_type":
+                        value = self.normalize_object_type(value)
                     df.loc[mask, key] = value
             self._write_df_atomic(self.reports_file, df)
 
@@ -256,12 +283,29 @@ class DataHandler:
                 return False
         return _DummyLock()
 
+    def normalize_object_type(self, value):
+        """Normalize a raw object_type value to a canonical one.
+
+        Returns the canonical string if recognized, otherwise returns the
+        input unchanged.
+        """
+        if value is None:
+            return value
+        v = str(value).strip()
+        key = v.lower()
+        return self._OBJECT_TYPE_CANON.get(key, v)
+
     def _read_df_locked(self, target_path: Path):
         """Read a CSV under a file lock. Returns empty DataFrame if missing."""
         if not target_path.exists():
             return pd.DataFrame()
         with self._get_lock(target_path):
-            return pd.read_csv(target_path)
+            df = pd.read_csv(target_path)
+            # Normalize object_type values on read to canonical forms
+            if "object_type" in df.columns:
+                df = df.copy()
+                df["object_type"] = df["object_type"].apply(self.normalize_object_type)
+            return df
     def _write_df_atomic(self, target_path: Path, df):
         """Write a DataFrame atomically to `target_path`.
 

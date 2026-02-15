@@ -50,7 +50,7 @@ servicemgr/
 ├── README.md                   # This file
 ├── pages/                      # Multi-page app pages
 │   ├── 0_Dashboard.py         # Dashboard with analytics
-│   ├── 1_Vehicles.py          # Vehicles management
+│   ├── 1_Equipment.py        # Equipment management
 │   ├── 4_Service_Planning.py  # Service scheduling
 │   ├── 5_Service_Reminders.py # Reminder management
 │   └── 6_Service_Reports.py   # Report management
@@ -58,7 +58,7 @@ servicemgr/
 │   ├── data_handler.py        # CSV data operations
 │   └── state_manager.py       # Cross-page state management
 └── data/                       # CSV data storage
-    ├── objects.csv            # Vehicle objects
+   ├── objects.csv            # Equipment objects
     ├── services.csv           # Scheduled services
     ├── reminders.csv          # Service reminders
     └── reports.csv            # Service reports
@@ -68,7 +68,7 @@ servicemgr/
 
 ### objects.csv
 - `object_id`: Unique identifier (e.g., VEH-0001, FAC-0001, EQU-0001)
-- `object_type`: Type of object (Vehicles)
+- `object_type`: Type of object (Vehicle, Facility, Other)
 - `name`: Name of the object
 - `description`: Object description
 - `status`: Status (Active, Inactive, Maintenance)
@@ -129,9 +129,9 @@ The app will open in your default browser at `http://localhost:8501`
 
 ### Adding Objects
 
-1. Navigate to the **Vehicles** page
-3. Fill in the required information
-4. Click **"Add"** button
+1. Navigate to the **Equipment** page
+2. Fill in the required information
+3. Click **"Add"** button
 
 ### Planning Services
 
@@ -178,13 +178,13 @@ The application includes a state management system that enables:
 - Quick navigation from object details to services and reminders
 - Seamless user experience across the entire application
 
-## Customization
+### Customization
 
 ### Adding New Object Types
 
 Edit `utils/data_handler.py`:
 ```python
-OBJECT_TYPES = ["Vehicles"]
+OBJECT_TYPES = ["Vehicle", "Facility", "Other"]
 ```
 
 Then create a new page file: `pages/X_YourNewType.py`

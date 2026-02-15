@@ -2,7 +2,7 @@
 Service Management App - Main Entry Point
 
 This is a Streamlit-based service management application that helps manage:
-- Objects: Vehicles
+- Objects: Equipment (Vehicles, Facilities, Other)
 - Services: Scheduled maintenance and service plans
 - Reminders: Service reminder notifications
 - Reports: Service completion reports
@@ -40,7 +40,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("""
     ### Features
-    - **Vehicle Management**: Add and manage vehicles
+    - **Equipment Management**: Add and manage equipment
     - **Service Planning**: Schedule maintenance and services
     - **Service Reminders**: Track upcoming services
     - **Service Reports**: Document completed services
@@ -54,7 +54,7 @@ with st.sidebar:
     Use the sidebar menu to navigate between pages.
     
     - **Dashboard**: Overview and alerts
-    - **Vehicles**: Manage vehicle objects
+    - **Equipment**: Manage equipment objects
     - **Service Planning**: Schedule and manage services
     - **Service Reminders**: Track service reminders
     - **Service Reports**: View and add reports
@@ -64,7 +64,7 @@ with st.sidebar:
     st.markdown("""
     ### Data Location
     All data is stored in CSV files in the `data/` folder:
-    - `objects.csv`: All vehicle objects
+    - `objects.csv`: All equipment objects
     - `services.csv`: Scheduled services
     - `reminders.csv`: Service reminders
     - `reports.csv`: Service reports
@@ -79,8 +79,8 @@ st.markdown("""
 This application helps you manage services, maintenance, and equipment tracking across 
 your organization. Here's how to use it:
 
-### 1️⃣ Add Vehicles First
-Navigate to the **Vehicles** page to add vehicles you want to manage.
+### 1️⃣ Add Equipment First
+Navigate to the **Equipment** page to add equipment you want to manage.
 
 ### 2️⃣ Plan Services
 Go to **Service Planning** to schedule regular maintenance services for your objects.
@@ -98,7 +98,7 @@ The **Dashboard** provides an overview of all objects, services, and alerts.
 
 ## Features
 
-✅ **Vehicle Management** - Manage all your vehicles  
+✅ **Equipment Management** - Manage all your equipment (Vehicles, Facilities, Other)  
 ✅ **Service Planning** - Schedule maintenance with custom intervals  
 ✅ **Reminder System** - Track upcoming and overdue services  
 ✅ **Reporting** - Document all service activities  
@@ -112,7 +112,7 @@ The **Dashboard** provides an overview of all objects, services, and alerts.
 ## Quick Links
 
 - [View Dashboard](Dashboard) - See overview and alerts
-- [Manage Vehicles](Vehicles) - Add and edit vehicles
+- [Manage Equipment](Equipment) - Add and edit equipment
 - [Plan Services](Service%20Planning) - Schedule maintenance
 - [Track Reminders](Service%20Reminders) - View upcoming services
 - [View Reports](Service%20Reports) - See service history

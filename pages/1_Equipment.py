@@ -4,41 +4,48 @@ from utils.data_handler import DataHandler
 from utils.state_manager import StateManager
 from datetime import datetime
 
-st.set_page_config(page_title="Vehicles", layout="wide")
+st.set_page_config(page_title="Equipment", layout="wide")
 
 StateManager.init_session_state()
 handler = DataHandler()
 
-st.header("🚗 Vehicles Management")
+st.header("🛠️ Equipment Management")
 
 # Sidebar filters
 st.sidebar.header("Filters")
+object_type_filter = st.sidebar.selectbox(
+    "Object Type",
+    ["All"] + handler.OBJECT_TYPES,
+    key="equipment_object_type"
+)
+
 status_filter = st.sidebar.selectbox(
     "Status Filter",
     ["All", "Active", "Inactive", "Maintenance"],
-    key="vehicles_status_filter"
+    key="equipment_status_filter"
 )
 
-# Get vehicles
-vehicles_df = handler.get_objects("Vehicles")
-
-# Apply filters
+# Get objects and apply filters
+vehicles_df = handler.get_objects()
+if object_type_filter != "All":
+    vehicles_df = vehicles_df[vehicles_df["object_type"] == object_type_filter]
 if status_filter != "All":
     vehicles_df = vehicles_df[vehicles_df["status"] == status_filter]
 
 # Tabs for different views
-tab1, tab2, tab3 = st.tabs(["View Vehicles", "Add Vehicle", "Edit Vehicle"])
+tab1, tab2, tab3 = st.tabs(["View Equipment", "Add Equipment", "Edit Equipment"])
 
 with tab1:
-    st.subheader("All Vehicles")
+    st.subheader("All Equipment")
     
     if vehicles_df.empty:
-        st.info("No vehicles found. Add one to get started!")
+        st.info("No equipment found. Add one to get started!")
     else:
         # Display vehicles in a table
         col1, col2 = st.columns([4, 1])
         with col1:
             column_config = {
+                "object_type": st.column_config.TextColumn(width="small"),
                 "object_id": st.column_config.TextColumn(width="stretch"),
                 "name": st.column_config.TextColumn(width="stretch"),
                 "description": st.column_config.TextColumn(width="stretch"),
@@ -46,7 +53,7 @@ with tab1:
                 "created_date": st.column_config.TextColumn(width="stretch"),
             }
             selected_vehicle = st.dataframe(
-                vehicles_df[["object_id", "name", "description", "status", "created_date"]],
+                vehicles_df[["object_type", "object_id", "name", "description", "status", "created_date"]],
                 use_container_width=True,
                 column_config=column_config,
                 hide_index=True
@@ -54,11 +61,11 @@ with tab1:
         
         # Click on row to view details
         vehicle_ids = vehicles_df["object_id"].tolist()
-        selected_id = st.selectbox("Select a vehicle to view details:", vehicle_ids)
+        selected_id = st.selectbox("Select equipment to view details:", vehicle_ids)
         
         if selected_id:
             StateManager.set_object_id(selected_id)
-            StateManager.set_object_type("Vehicles")
+            StateManager.set_object_type("Vehicle")
             
             vehicle = vehicles_df[vehicles_df["object_id"] == selected_id].iloc[0]
             
@@ -77,11 +84,11 @@ with tab1:
             
             # Show services for this vehicle
             st.write("---")
-            st.subheader("Services for this Vehicle")
+            st.subheader("Services for this Equipment")
             services_df = handler.get_services(object_id=selected_id)
             
             if services_df.empty:
-                st.info("No services scheduled for this vehicle.")
+                st.info("No services scheduled for this equipment.")
             else:
                 st.dataframe(
                     services_df[["service_id", "service_name", "interval_days", 
@@ -91,11 +98,11 @@ with tab1:
             
             # Show reminders
             st.write("---")
-            st.subheader("Reminders for this Vehicle")
+            st.subheader("Reminders for this Equipment")
             reminders_df = handler.get_reminders(object_id=selected_id)
             
             if reminders_df.empty:
-                st.info("No reminders for this vehicle.")
+                st.info("No reminders for this equipment.")
             else:
                 st.dataframe(
                     reminders_df[["reminder_id", "service_id", "reminder_date", "status"]],
@@ -103,53 +110,53 @@ with tab1:
                 )
 
 with tab2:
-    st.subheader("Add New Vehicle")
+    st.subheader("Add New Equipment")
     
-    with st.form("add_vehicle_form"):
-        name = st.text_input("Vehicle Name (e.g., Truck-001)")
+    with st.form("add_equipment_form"):
+        name = st.text_input("Equipment Name (e.g., Truck-001)")
         description = st.text_area("Description", max_chars=500)
         status = st.selectbox("Status", ["Active", "Inactive", "Maintenance"])
         
-        submitted = st.form_submit_button("Add Vehicle")
+        submitted = st.form_submit_button("Add Equipment")
         if submitted:
             if name:
                 vehicle_id = handler.add_object(
-                    object_type="Vehicles",
+                    object_type="Vehicle",
                     name=name,
                     description=description,
                     status=status
                 )
-                st.success(f"✓ Vehicle added successfully! ID: {vehicle_id}")
+                st.success(f"✓ Equipment added successfully! ID: {vehicle_id}")
                 st.rerun()
             else:
-                st.error("Please enter a vehicle name.")
+                st.error("Please enter a name.")
 
 with tab3:
-    st.subheader("Edit Vehicle")
+    st.subheader("Edit Equipment")
     
     if vehicles_df.empty:
-        st.info("No vehicles to edit.")
+        st.info("No equipment to edit.")
     else:
         selected_vehicle_id = st.selectbox(
-            "Select vehicle to edit:",
+            "Select equipment to edit:",
             vehicles_df["object_id"].tolist(),
-            key="edit_vehicle_select"
+            key="edit_equipment_select"
         )
         
         if selected_vehicle_id:
             vehicle = vehicles_df[vehicles_df["object_id"] == selected_vehicle_id].iloc[0]
             
-            with st.form("edit_vehicle_form"):
-                name = st.text_input("Vehicle Name", value=vehicle["name"])
+            with st.form("edit_equipment_form"):
+                name = st.text_input("Equipment Name", value=vehicle["name"])
                 description = st.text_area("Description", value=vehicle["description"], max_chars=500)
                 status = st.selectbox("Status", ["Active", "Inactive", "Maintenance"], 
                                      index=["Active", "Inactive", "Maintenance"].index(vehicle["status"]))
                 
                 col1, col2 = st.columns(2)
                 with col1:
-                    submitted = st.form_submit_button("Update Vehicle")
+                    submitted = st.form_submit_button("Update Equipment")
                 with col2:
-                    delete_btn = st.form_submit_button("Delete Vehicle", type="secondary")
+                    delete_btn = st.form_submit_button("Delete Equipment", type="secondary")
                 
                 if submitted:
                     handler.update_object(
@@ -158,10 +165,10 @@ with tab3:
                         description=description,
                         status=status
                     )
-                    st.success("✓ Vehicle updated successfully!")
+                    st.success("✓ Equipment updated successfully!")
                     st.rerun()
                 
                 if delete_btn:
                     handler.delete_object(selected_vehicle_id)
-                    st.success("✓ Vehicle deleted successfully!")
+                    st.success("✓ Equipment deleted successfully!")
                     st.rerun()
