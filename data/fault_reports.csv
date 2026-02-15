@@ -1,1 +1,2 @@
 fault_id,object_id,object_type,observation_date,actual_meter_reading,meter_unit,description,photo_paths,created_date
+FLT-00001,FAC-0001,Facility,2026-02-15,0,km,Test fault report,,2026-02-15 16:14:20

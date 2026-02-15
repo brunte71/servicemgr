@@ -46,10 +46,11 @@ with view_tab:
             st.write(f"**Description:** {fault['description']}")
             st.write(f"**Created Date:** {fault['created_date']}")
             # Show photos
-            if fault['photo_paths']:
+            photo_paths_val = str(fault['photo_paths']) if pd.notna(fault['photo_paths']) else ''
+            if photo_paths_val:
                 st.write("**Photos:**")
-                for path in fault['photo_paths'].split(';'):
-                    if path:
+                for path in photo_paths_val.split(';'):
+                    if path and path.lower() != 'nan':
                         st.image(path, width=300)
             # Schedule Service button
             if st.button("Schedule Service for this Fault"):
@@ -84,6 +85,15 @@ with add_tab:
         )
         filter_type = st.session_state["fault_report_object_type"]
         obj_list = all_objects[all_objects["object_type"] == filter_type]
+        # Camera checkbox and input outside the form for reactivity
+        take_photo = st.checkbox("Take photo with camera", key="take_photo_checkbox")
+        if take_photo:
+            camera_image = st.camera_input("Camera", key="fault_camera")
+            if camera_image is not None:
+                st.session_state["fault_camera_image"] = camera_image
+        else:
+            st.session_state["fault_camera_image"] = None
+
         with st.form("add_fault_form"):
             if obj_list.empty:
                 st.warning(f"No {filter_type.lower()} found. Please add one first.")
@@ -100,10 +110,6 @@ with add_tab:
                 meter_unit = st.selectbox("Meter Unit", handler.get_meter_units())
                 description = st.text_area("Description", max_chars=1000)
                 uploaded_files = st.file_uploader("Upload Photos", accept_multiple_files=True, type=["png", "jpg", "jpeg"], key="fault_photos")
-                take_photo = st.checkbox("Take photo with camera", key="take_photo_checkbox")
-                camera_image = None
-                if take_photo:
-                    camera_image = st.camera_input("Camera", key="fault_camera")
                 submitted = st.form_submit_button("Add Fault Report")
             if submitted and not obj_list.empty:
                 # Save uploaded files and camera photo
@@ -116,6 +122,7 @@ with add_tab:
                         with open(file_path, "wb") as f:
                             f.write(file.read())
                         photo_paths.append(file_path)
+                camera_image = st.session_state.get("fault_camera_image")
                 if camera_image is not None:
                     cam_file_path = os.path.join(photo_dir, f"{datetime.now().strftime('%Y%m%d%H%M%S%f')}_camera.jpg")
                     with open(cam_file_path, "wb") as f:
