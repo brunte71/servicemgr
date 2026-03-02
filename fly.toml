@@ -4,7 +4,7 @@
 #
 
 app = 'mymaintlog'
-primary_region = 'iad'
+primary_region = 'ard'
 
 [build]
 
@@ -18,7 +18,7 @@ primary_region = 'iad'
   processes = ['app']
 
 [[vm]]
-  memory = '1gb'
+  # Simple single-machine size
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 1024
