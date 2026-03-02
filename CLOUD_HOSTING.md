@@ -6,7 +6,7 @@
 |-------|------|
 | Python source (14 files, ~2,600 lines) | ~100 KB |
 | Config & YAML files | ~5 KB |
-| Sample data (SQLite DB + CSVs) | ~10 KB |
+| Sample data (SQLite DB + metadata) | ~10 KB |
 | Sample fault photos (6 photos) | ~3 MB |
 | **Git repository total** | **~6.6 MB** |
 | **Deployed Docker image** | **~650–750 MB** (python:3.12-slim + pandas + streamlit) |

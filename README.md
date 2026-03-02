@@ -39,7 +39,7 @@ A Streamlit-based application for managing vehicle services, fault reports, main
 
 ```
 mymaintlog/
-├── app.py                      # Main entry point
+├── Home.py                     # Main entry point
 ├── requirements.txt            # Python dependencies
 ├── README.md                   # This file
 ├── pages/                      # Multi-page app pages
@@ -49,59 +49,26 @@ mymaintlog/
 │   ├── 5_Service_Reminders.py # Reminder management
 │   └── 6_Service_Reports.py   # Report management
 ├── utils/                      # Utility modules
-│   ├── data_handler.py        # CSV data operations
+│   ├── data_handler.py        # SQLite data operations
 │   └── state_manager.py       # Cross-page state management
-└── data/                       # CSV data storage
-   ├── objects.csv            # Equipment objects
-    ├── services.csv           # Scheduled services
-    ├── reminders.csv          # Service reminders
-    └── reports.csv            # Service reports
+└── data/                       # Runtime data storage
+   ├── mymaintlog.db          # SQLite database
+   ├── fault_photos/          # Uploaded fault photos (if file-based)
+   └── *.bak-*                # Optional migration backups
 ```
 
-## CSV File Structure
+## SQLite Storage Overview
 
-### objects.csv
-- `object_id`: Unique identifier (e.g., VEH-0001, FAC-0001, EQU-0001)
-- `object_type`: Type of object (Vehicle, Facility, Other)
-- `name`: Name of the object
-- `description`: Object description
-- `status`: Status (Active, Inactive, Maintenance)
-- `created_date`: Creation timestamp
-- `last_updated`: Last update timestamp
+The app stores operational data in `data/mymaintlog.db` (SQLite, WAL mode).
 
-### services.csv
-- `service_id`: Unique service identifier (SVC-00001)
-- `object_id`: Associated object ID
-- `object_type`: Type of object
-- `service_name`: Service name
-- `description`: Service description
-- `interval_days`: Service interval in days
-- `last_service_date`: Date of last service
-- `next_service_date`: Next scheduled service date
-- `status`: Status (Scheduled, Pending, In Progress, Completed)
-- `notes`: Service notes
-- `created_date`: Creation timestamp
-
-### reminders.csv
-- `reminder_id`: Unique reminder ID (REM-00001)
-- `service_id`: Associated service ID
-- `object_id`: Associated object ID
-- `object_type`: Type of object
-- `reminder_date`: Reminder date
-- `status`: Status (Pending, Completed)
-- `notes`: Reminder notes
-- `created_date`: Creation timestamp
-
-### reports.csv
-- `report_id`: Unique report ID (REP-00001)
-- `object_id`: Associated object ID
-- `object_type`: Type of object
-- `report_type`: Type of report (Maintenance, Inspection, Repair, Preventive, Other)
-- `title`: Report title
-- `description`: Report description
-- `completion_date`: Date of completion
-- `notes`: Report notes
-- `created_date`: Creation timestamp
+Main tables:
+- `objects`: equipment/facilities/other tracked objects
+- `services`: planned and scheduled services
+- `reminders`: due-date reminders and notification flags
+- `reports`: completed service reports
+- `fault_reports`: fault observations and metadata
+- `meter_units`: allowed unit values
+- `fault_photos`: image blobs for fault reports
 
 ## Installation
 
@@ -114,7 +81,7 @@ mymaintlog/
 
 3. **Run the application**
    ```bash
-   streamlit run app.py
+   streamlit run Home.py
    ```
 
 The app will open in your default browser at `http://localhost:8501`
@@ -195,16 +162,16 @@ To add more types, modify the selectbox options in `pages/6_Service_Reports.py`
 
 ## Data Backup
 
-Your data is stored in CSV files in the `data/` folder. To backup:
+Your data is stored in the SQLite database in the `data/` folder. To backup:
 
 1. Copy the entire `data/` folder to a safe location
 2. Or use the export buttons on the Dashboard
-3. Or manually backup the CSV files
+3. Or manually backup `data/mymaintlog.db`
 
 ## Troubleshooting
 
-**Problem**: CSV files not created automatically
-- **Solution**: Create the `data/` folder manually if it doesn't exist
+**Problem**: SQLite database file not created automatically
+- **Solution**: Create the `data/` folder manually if it doesn't exist and verify write permissions
 
 **Problem**: Data not persisting
 - **Solution**: Ensure the `data/` folder has write permissions
@@ -226,7 +193,7 @@ Free to use and modify for your organization.
 
 For issues or questions:
 1. Check the sidebar information for feature explanations
-2. Review the CSV files in the `data/` folder for data integrity
+2. Review the records in `data/mymaintlog.db` for data integrity
 3. Ensure all dependencies are installed with `pip install -r requirements.txt`
 
 ---
