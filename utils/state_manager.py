@@ -77,3 +77,19 @@ class StateManager:
         """Clear all filters."""
         st.session_state[StateManager.SESSION_KEYS["text_filter"]] = ""
         st.session_state[StateManager.SESSION_KEYS["status_filter"]] = "All"
+
+    @staticmethod
+    def get_widget_instance_key(widget_key_base: str) -> str:
+        """Return a stable-per-run, rotatable widget key for safe widget resets."""
+        counter_key = f"{widget_key_base}__instance"
+        if counter_key not in st.session_state:
+            st.session_state[counter_key] = 0
+        return f"{widget_key_base}_{st.session_state[counter_key]}"
+
+    @staticmethod
+    def reset_widget_instance(widget_key_base: str):
+        """Rotate a widget's instance key to reset widget state without mutating widget-bound keys."""
+        counter_key = f"{widget_key_base}__instance"
+        if counter_key not in st.session_state:
+            st.session_state[counter_key] = 0
+        st.session_state[counter_key] += 1

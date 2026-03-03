@@ -199,7 +199,12 @@ with add_tab:
                 actual_meter_reading = st.number_input("Actual Meter Reading", min_value=0, value=0)
                 meter_unit = st.selectbox("Meter Unit", handler.get_meter_units())
                 description = st.text_area("Description", max_chars=1000)
-                uploaded_files = st.file_uploader("Upload Photos", accept_multiple_files=True, type=["png", "jpg", "jpeg"], key="fault_photos")
+                uploaded_files = st.file_uploader(
+                    "Upload Photos",
+                    accept_multiple_files=True,
+                    type=["png", "jpg", "jpeg"],
+                    key=StateManager.get_widget_instance_key("fault_photos")
+                )
                 submitted = st.form_submit_button("Add Fault Report")
             if submitted and not obj_list.empty:
                 fault_id = handler.add_fault_report(
@@ -219,8 +224,8 @@ with add_tab:
                 for idx, camera_image in enumerate(st.session_state.get("fault_camera_images", [])):
                     handler.save_fault_photo(fault_id, f"camera_{idx+1}.jpg", "image/jpeg", camera_image.getvalue())
                 st.success(f"✓ Fault report added successfully! ID: {fault_id}")
-                # Reset only non-widget session state to avoid StreamlitAPIException
+                # Reset form-related state safely (without mutating widget keys directly)
                 st.session_state["fault_camera_images"] = []
-                st.session_state["fault_photos"] = None
+                StateManager.reset_widget_instance("fault_photos")
                 st.session_state["fault_report_object_type"] = handler.OBJECT_TYPES[0]
                 st.rerun()
