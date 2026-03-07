@@ -3,6 +3,7 @@ import pandas as pd
 from io import BytesIO
 from utils.data_handler import DataHandler
 from utils.state_manager import StateManager
+from utils import selectbox_label
 from datetime import datetime
 
 st.set_page_config(page_title="Fault Reports", layout="wide")
@@ -35,6 +36,7 @@ with edit_tab:
         selected_fault_id = st.selectbox(
             "Select fault report to edit:",
             df["fault_id"].tolist(),
+            format_func=lambda x: selectbox_label(x, df, 'fault_id', None, 'description'),
             key="edit_fault_select"
         )
         if selected_fault_id:
@@ -94,6 +96,7 @@ with view_tab:
         selected_fault_id = st.selectbox(
             "Select fault report to view details:",
             df["fault_id"].tolist(),
+            format_func=lambda x: selectbox_label(x, df, 'fault_id', None, 'description'),
             key="view_fault_select"
         )
         if selected_fault_id:
@@ -192,7 +195,7 @@ with add_tab:
                 object_id = st.selectbox(
                     "Select Equipment",
                     obj_list["object_id"].tolist(),
-                    format_func=lambda x: f"{x} - {obj_list[obj_list['object_id']==x]['name'].values[0]}",
+                    format_func=lambda x: selectbox_label(x, obj_list, 'object_id', 'name', 'description'),
                     key="fault_add_equipment_select"
                 )
                 observation_date = st.date_input("Observation Date", value=datetime.today())

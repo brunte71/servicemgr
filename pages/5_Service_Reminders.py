@@ -3,6 +3,7 @@ import pandas as pd
 from utils.data_handler import DataHandler
 from utils.state_manager import StateManager
 from utils.email_notifier import EmailNotifier
+from utils import selectbox_label
 from datetime import datetime
 import yaml
 
@@ -125,7 +126,7 @@ with tab2:
             service_id = st.selectbox(
                 "Select Service",
                 services_df["service_id"].tolist(),
-                format_func=lambda x: f"{x} - {services_df[services_df['service_id']==x]['service_name'].values[0]}"
+                format_func=lambda x: selectbox_label(x, services_df, 'service_id', 'service_name', 'description')
             )
             
             if service_id:
@@ -185,7 +186,8 @@ with tab3:
     else:
         selected_reminder_id = st.selectbox(
             "Select reminder to edit:",
-            reminders_df["reminder_id"].tolist()
+            reminders_df["reminder_id"].tolist(),
+            format_func=lambda x: selectbox_label(x, reminders_df, 'reminder_id', None, 'notes')
         )
         
         if selected_reminder_id:

@@ -57,6 +57,12 @@ if not st.session_state['authenticated']:
                     st.session_state['user_email'] = username
                     st.session_state['user_role'] = user_data['role']
                     st.session_state['user_name'] = user_data['name']
+                    # Track news views: increment counter and persist
+                    news_views = user_data.get('news_views', 0) + 1
+                    config['credentials']['usernames'][username]['news_views'] = news_views
+                    st.session_state['news_views'] = news_views
+                    with open('users.yaml', 'w') as f:
+                        yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
                     st.success(f"Welcome {user_data['name']}!")
                     st.rerun()
                 else:
@@ -91,8 +97,9 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- Fault Reports Highlight ---
-st.markdown("""
+# --- Fault Reports Highlight (shown only for first 2 login sessions per user) ---
+if st.session_state.get('news_views', 0) <= 2:
+    st.markdown("""
 <style>
 .news-info {
     background-color: var(--news-bg, #f9f6e7);

@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from utils.data_handler import DataHandler
 from utils.state_manager import StateManager
+from utils import selectbox_label
 from datetime import datetime
 
 st.set_page_config(page_title="Service Reports", layout="wide")
@@ -76,6 +77,7 @@ with tab1:
         selected_report_id = st.selectbox(
             "Select report to view details:",
             reports_df["report_id"].tolist(),
+            format_func=lambda x: selectbox_label(x, reports_df, 'report_id', 'title', 'description'),
             key="view_report_select"
         )
         
@@ -132,7 +134,7 @@ with tab2:
                 object_id = st.selectbox(
                     "Select Equipment",
                     obj_list["object_id"].tolist(),
-                    format_func=lambda x: f"{x} - {obj_list[obj_list['object_id']==x]['name'].values[0]}",
+                    format_func=lambda x: selectbox_label(x, obj_list, 'object_id', 'name', 'description'),
                     key="report_equipment_select"
                 )
                 report_type = st.selectbox(
@@ -181,6 +183,7 @@ with tab3:
         selected_report_id = st.selectbox(
             "Select report to edit:",
             reports_df["report_id"].tolist(),
+            format_func=lambda x: selectbox_label(x, reports_df, 'report_id', 'title', 'description'),
             key="edit_report_select"
         )
         

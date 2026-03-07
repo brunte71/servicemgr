@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from utils.data_handler import DataHandler
 from utils.state_manager import StateManager
+from utils import selectbox_label
 from datetime import datetime
 
 st.set_page_config(page_title="Equipment", layout="wide")
@@ -65,7 +66,11 @@ with tab1:
         
         # Click on row to view details
         vehicle_ids = vehicles_df["object_id"].tolist()
-        selected_id = st.selectbox("Select equipment to view details:", vehicle_ids)
+        selected_id = st.selectbox(
+            "Select equipment to view details:",
+            vehicle_ids,
+            format_func=lambda x: selectbox_label(x, vehicles_df, 'object_id', 'name', 'description')
+        )
         
         if selected_id:
             StateManager.set_object_id(selected_id)
@@ -144,6 +149,7 @@ with tab3:
         selected_vehicle_id = st.selectbox(
             "Select equipment to edit:",
             vehicles_df["object_id"].tolist(),
+            format_func=lambda x: selectbox_label(x, vehicles_df, 'object_id', 'name', 'description'),
             key="edit_equipment_select"
         )
         if selected_vehicle_id:

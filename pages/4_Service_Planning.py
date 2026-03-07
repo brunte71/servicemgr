@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from utils.data_handler import DataHandler
 from utils.state_manager import StateManager
+from utils import selectbox_label
 from datetime import datetime, timedelta
 
 st.set_page_config(page_title="Service Planning", layout="wide")
@@ -132,7 +133,7 @@ with tab2:
                 object_id = st.selectbox(
                     "Select Equipment",
                     obj_list["object_id"].tolist(),
-                    format_func=lambda x: f"{x} - {obj_list[obj_list['object_id']==x]['name'].values[0]}",
+                    format_func=lambda x: selectbox_label(x, obj_list, 'object_id', 'name', 'description'),
                     key="service_equipment_select"
                 )
                 service_name = st.text_input("Service Name (e.g., Oil Change, Inspection)")
@@ -178,7 +179,7 @@ with tab3:
         selected_service_id = st.selectbox(
             "Select service to edit:",
             services_df["service_id"].tolist(),
-            format_func=lambda x: f"{x} - {services_df[services_df['service_id']==x]['service_name'].values[0]}"
+            format_func=lambda x: selectbox_label(x, services_df, 'service_id', 'service_name', 'description')
         )
         
         if selected_service_id:
