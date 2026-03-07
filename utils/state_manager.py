@@ -73,6 +73,49 @@ class StateManager:
             st.stop()
 
     @staticmethod
+    def init_and_enforce(cm):
+        """
+        Unified auth setup for every page:
+          1. Wait for CookieManager to initialise (first render may return None).
+          2. Try to restore session from the browser cookie if not in session_state.
+          3. Enforce authentication — stop if not logged in.
+          4. Check inactivity timeout (10 min); logout + stop if exceeded.
+          5. Update last_activity and throttle-refresh the cookie.
+        """
+        import time
+        from utils.auth_session import (
+            try_restore_session, do_logout,
+            refresh_cookie_if_needed, INACTIVITY_TIMEOUT,
+        )
+
+        if not st.session_state.get("authenticated"):
+            cookies = cm.get_all()
+            if cookies is None:
+                # CookieManager iframe hasn't sent data back yet — wait one render
+                st.stop()
+            try_restore_session(cm, cookies)
+
+        if not st.session_state.get("authenticated", False):
+            if st.session_state.pop("_session_expired", False):
+                st.warning("⏰ Session expired due to inactivity. Please log in again.")
+            else:
+                st.error("🔒 Please log in to access this page.")
+                st.info("Return to the **Home** page to sign in.")
+            st.stop()
+
+        # Inactivity check
+        now = time.time()
+        last = st.session_state.get("last_activity", now)
+        if now - last > INACTIVITY_TIMEOUT:
+            do_logout(cm)
+            st.session_state["_session_expired"] = True
+            st.warning("⏰ Session expired due to inactivity. Please log in again.")
+            st.stop()
+
+        st.session_state["last_activity"] = now
+        refresh_cookie_if_needed(cm)
+
+    @staticmethod
     def clear_filters():
         """Clear all filters."""
         st.session_state[StateManager.SESSION_KEYS["text_filter"]] = ""

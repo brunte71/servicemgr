@@ -3,13 +3,17 @@ import yaml
 import bcrypt
 from utils.data_handler import DataHandler
 from utils.state_manager import StateManager
+import extra_streamlit_components as stx
 
 st.set_page_config(page_title="Admin Panel", layout="wide")
+
+cm = stx.CookieManager(key="cookies")
+StateManager.init_session_state()
+StateManager.init_and_enforce(cm)
+
 st.title("👤 Admin Panel")
 st.markdown("**Administrator Control Panel** - Manage users and view all system data")
 st.markdown("---")
-
-StateManager.enforce_auth()
 
 user_email = st.session_state.get('user_email')
 is_admin = False

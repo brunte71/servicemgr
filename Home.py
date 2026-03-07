@@ -14,9 +14,15 @@ Data is stored in CSV files for easy backup and sharing.
 
 import streamlit as st
 from utils.state_manager import StateManager
+from utils.auth_session import (
+    try_restore_session, make_session_cookie, do_logout,
+    refresh_cookie_if_needed, COOKIE_NAME, INACTIVITY_TIMEOUT,
+)
+import extra_streamlit_components as stx
 import yaml
 from yaml.loader import SafeLoader
 import bcrypt
+import time
 
 
 # Set page config
@@ -27,24 +33,37 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- User Authentication ---
-# Check if user is already logged in
-if 'authenticated' not in st.session_state:
-    st.session_state['authenticated'] = False
+# --- Cookie Manager (must be created right after set_page_config) ---
+cm = stx.CookieManager(key="cookies")
 
-if not st.session_state['authenticated']:
+# --- User Authentication ---
+# Try to restore session from browser cookie on page refresh
+if not st.session_state.get("authenticated"):
+    cookies = cm.get_all()
+    if cookies is None:
+        st.stop()  # Wait one render for CookieManager iframe to initialise
+    try_restore_session(cm, cookies)
+
+# Show expiry notice carried over from a sub-page timeout
+if st.session_state.pop("_session_expired", False):
+    st.session_state["_show_expired_msg"] = True
+
+if not st.session_state.get("authenticated"):
     st.title("🔐 MyMaintLog Login")
-    
+
+    if st.session_state.pop("_show_expired_msg", False):
+        st.warning("⏰ Your session expired due to inactivity. Please log in again.")
+
     # Load users
     with open("users.yaml") as file:
         config = yaml.load(file, Loader=SafeLoader)
-    
+
     # Login form
     with st.form("login_form"):
         username = st.text_input("Email")
         password = st.text_input("Password", type="password")
         submit = st.form_submit_button("Login")
-        
+
         if submit:
             # Check if user exists
             users = config['credentials']['usernames']
@@ -63,14 +82,29 @@ if not st.session_state['authenticated']:
                     st.session_state['news_views'] = news_views
                     with open('users.yaml', 'w') as f:
                         yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
+                    # Persist session in browser cookie
+                    cm.set(COOKIE_NAME, make_session_cookie(
+                        username, user_data['role'], user_data['name'], news_views
+                    ))
+                    st.session_state['last_activity'] = time.time()
                     st.success(f"Welcome {user_data['name']}!")
                     st.rerun()
                 else:
                     st.error("Incorrect password")
             else:
                 st.error("User not found")
-    
+
     st.stop()
+
+# --- Inactivity timeout check for Home page ---
+now = time.time()
+last = st.session_state.get("last_activity", now)
+if now - last > INACTIVITY_TIMEOUT:
+    do_logout(cm)
+    st.session_state["_session_expired"] = True
+    st.rerun()
+st.session_state["last_activity"] = now
+refresh_cookie_if_needed(cm)
 
 # Initialize session state
 StateManager.init_session_state()
@@ -82,10 +116,7 @@ with st.sidebar:
     if st.session_state.get('user_role') == 'admin':
         st.write("🔑 Admin")
     if st.button("Logout"):
-        st.session_state['authenticated'] = False
-        st.session_state['user_email'] = None
-        st.session_state['user_role'] = None
-        st.session_state['user_name'] = None
+        do_logout(cm)
         st.rerun()
 
 # Add custom styling

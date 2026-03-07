@@ -6,12 +6,13 @@ from utils.email_notifier import EmailNotifier
 from utils import selectbox_label
 from datetime import datetime
 import yaml
+import extra_streamlit_components as stx
 
 st.set_page_config(page_title="Service Reminders", layout="wide")
 
-
+cm = stx.CookieManager(key="cookies")
 StateManager.init_session_state()
-StateManager.enforce_auth()
+StateManager.init_and_enforce(cm)
 handler = DataHandler()
 user_email = st.session_state.get('user_email')
 is_admin = st.session_state.get('user_role') == 'admin'

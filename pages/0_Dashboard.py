@@ -3,12 +3,13 @@ import pandas as pd
 from utils.data_handler import DataHandler
 from utils.state_manager import StateManager
 from datetime import datetime, timedelta
+import extra_streamlit_components as stx
 
 st.set_page_config(page_title="Dashboard", layout="wide")
 
-
+cm = stx.CookieManager(key="cookies")
 StateManager.init_session_state()
-StateManager.enforce_auth()
+StateManager.init_and_enforce(cm)
 handler = DataHandler()
 user_email = st.session_state.get('user_email')
 is_admin = st.session_state.get('user_role') == 'admin'
