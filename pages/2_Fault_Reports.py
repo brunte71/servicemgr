@@ -206,26 +206,26 @@ with add_tab:
                     key=StateManager.get_widget_instance_key("fault_photos")
                 )
                 submitted = st.form_submit_button("Add Fault Report")
-            if submitted and not obj_list.empty:
-                fault_id = handler.add_fault_report(
-                    object_id=object_id,
-                    object_type=filter_type,
-                    observation_date=str(observation_date),
-                    actual_meter_reading=int(actual_meter_reading),
-                    meter_unit=meter_unit,
-                    description=description,
-                    user_email=user_email
-                )
-                # Save uploaded photos as SQLite BLOBs
-                if uploaded_files:
-                    for file in uploaded_files:
-                        handler.save_fault_photo(fault_id, file.name, file.type or "image/jpeg", file.getvalue())
-                # Save camera photos as SQLite BLOBs
-                for idx, camera_image in enumerate(st.session_state.get("fault_camera_images", [])):
-                    handler.save_fault_photo(fault_id, f"camera_{idx+1}.jpg", "image/jpeg", camera_image.getvalue())
-                st.success(f"✓ Fault report added successfully! ID: {fault_id}")
-                # Reset form-related state safely (without mutating widget keys directly)
-                st.session_state["fault_camera_images"] = []
-                StateManager.reset_widget_instance("fault_photos")
-                st.session_state["fault_report_object_type"] = handler.OBJECT_TYPES[0]
-                st.rerun()
+        if submitted and not obj_list.empty:
+            fault_id = handler.add_fault_report(
+                object_id=object_id,
+                object_type=filter_type,
+                observation_date=str(observation_date),
+                actual_meter_reading=int(actual_meter_reading),
+                meter_unit=meter_unit,
+                description=description,
+                user_email=user_email
+            )
+            # Save uploaded photos as SQLite BLOBs
+            if uploaded_files:
+                for file in uploaded_files:
+                    handler.save_fault_photo(fault_id, file.name, file.type or "image/jpeg", file.getvalue())
+            # Save camera photos as SQLite BLOBs
+            for idx, camera_image in enumerate(st.session_state.get("fault_camera_images", [])):
+                handler.save_fault_photo(fault_id, f"camera_{idx+1}.jpg", "image/jpeg", camera_image.getvalue())
+            st.success(f"✓ Fault report added successfully! ID: {fault_id}")
+            # Reset form-related state safely (without mutating widget keys directly)
+            st.session_state["fault_camera_images"] = []
+            StateManager.reset_widget_instance("fault_photos")
+            st.session_state["fault_report_object_type"] = handler.OBJECT_TYPES[0]
+            st.rerun()
